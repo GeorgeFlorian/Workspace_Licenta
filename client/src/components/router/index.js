@@ -2,8 +2,7 @@ import { createBrowserRouter, redirect } from "react-router-dom";
 import { fakeAuthProvider } from "@auth/auth";
 
 import PageWrapper from "@layout/PageWrapper";
-import Login from "@auth/Login";
-import Dashboard from "@pages/Dashboard";
+import { LoginPage, Dashboard, Register } from "@pages";
 
 import { loginAction, loginLoader, protectedLoader } from "@auth/auth";
 
@@ -21,7 +20,7 @@ export const router = createBrowserRouter([
         path: "login",
         action: loginAction,
         loader: loginLoader,
-        Component: Login,
+        Component: LoginPage,
       },
       {
         path: "dashboard",
@@ -34,7 +33,7 @@ export const router = createBrowserRouter([
     path: "/logout",
     async action() {
       // We sign out in a "resource route" that we can hit from a fetcher.Form
-      await fakeAuthProvider.signout();
+      await fakeAuthProvider.signOut();
       return redirect("/");
     },
   },

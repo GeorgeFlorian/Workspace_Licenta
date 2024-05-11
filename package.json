@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start-server": "node index.js",
-    "start": "concurrently \"npm run start-server\" \"npm run --prefix client start-client\""
+    "start": "concurrently \"npm run start-server\" \"npm run --prefix client dev\""
   },
   "author": "",
   "license": "ISC",
@@ -17,8 +17,12 @@
     "googleapis": "^133.0.0"
   },
   "devDependencies": {
+    "@craco/craco": "^7.1.0",
     "concurrently": "^8.2.2",
+    "eslint": "^9.2.0",
     "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-react": "^7.34.1",
+    "eslint-plugin-react-hooks": "^4.6.2",
     "nodemon": "^3.0.3"
   }
 }

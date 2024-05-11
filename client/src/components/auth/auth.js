@@ -1,36 +1,26 @@
-import type { LoaderFunctionArgs } from "react-router-dom";
 import { redirect } from "react-router-dom";
-
-interface AuthProvider {
-  isAuthenticated: boolean;
-  username: null | string;
-
-  signin(username: string): Promise<void>;
-
-  signout(): Promise<void>;
-}
 
 /**
  * This represents some generic auth provider API, like Firebase.
  */
-export const fakeAuthProvider: AuthProvider = {
+export const fakeAuthProvider = {
   isAuthenticated: false,
   username: null,
-  async signin(username: string) {
+  async signIn(username) {
     await new Promise((r) => setTimeout(r, 500)); // fake delay
     fakeAuthProvider.isAuthenticated = true;
     fakeAuthProvider.username = username;
   },
-  async signout() {
+  async signOut() {
     await new Promise((r) => setTimeout(r, 500)); // fake delay
     fakeAuthProvider.isAuthenticated = false;
     fakeAuthProvider.username = "";
   },
 };
 
-export async function loginAction({ request }: LoaderFunctionArgs) {
+export async function loginAction({ request }) {
   const formData = await request.formData();
-  const username = formData.get("username") as string | null;
+  const username = formData.get("username") | null;
 
   // Validate our form inputs and return validation errors via useActionData()
   if (!username) {
@@ -41,7 +31,7 @@ export async function loginAction({ request }: LoaderFunctionArgs) {
 
   // Sign in and redirect to the proper destination if successful.
   try {
-    await fakeAuthProvider.signin(username);
+    await fakeAuthProvider.signIn(username);
   } catch (error) {
     // Unused as of now but this is how you would handle invalid
     // username/password combinations - just like validating the inputs
@@ -51,7 +41,7 @@ export async function loginAction({ request }: LoaderFunctionArgs) {
     };
   }
 
-  const redirectTo = formData.get("redirectTo") as string | null;
+  const redirectTo = formData.get("redirectTo") | null;
   return redirect(redirectTo || "/");
 }
 
@@ -62,7 +52,7 @@ export async function loginLoader() {
   return null;
 }
 
-export function protectedLoader({ request }: LoaderFunctionArgs) {
+export function protectedLoader({ request }) {
   // If the user is not logged in and tries to access `/protected`, we redirect
   // them to `/login` with a `from` parameter that allows login to redirect back
   // to this page upon successful authentication
