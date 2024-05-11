@@ -1,7 +1,7 @@
 import { createBrowserRouter, redirect } from "react-router-dom";
 
 import PageWrapper from "@layout/PageWrapper";
-import { LoginPage, Dashboard, Register } from "@pages";
+import { LoginPage, Dashboard, Register } from "@pages/";
 
 import {
   loginAction,
