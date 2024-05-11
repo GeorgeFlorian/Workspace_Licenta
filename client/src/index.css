@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  body {
+    @apply min-h-screen h-full transition;
+  }
+
+  #root {
+    @apply min-h-screen h-full;
+  }
+
+  .PageWrapper {
+    @apply min-h-screen h-full;
+  }
+
+}

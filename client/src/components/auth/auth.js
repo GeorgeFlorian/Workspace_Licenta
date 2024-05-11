@@ -23,9 +23,8 @@ export const fakeAuthProvider = {
 };
 
 export async function loginAction({ request }) {
-  console.log("loginAction");
   const formData = await request.formData();
-  const username = formData.get("username") | null;
+  const username = formData.get("username") || null;
 
   // Validate our form inputs and return validation errors via useActionData()
   if (!username) {
