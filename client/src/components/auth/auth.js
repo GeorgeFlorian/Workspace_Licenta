@@ -4,21 +4,26 @@ import { redirect } from "react-router-dom";
  * This represents some generic auth provider API, like Firebase.
  */
 export const fakeAuthProvider = {
-  isAuthenticated: false,
-  username: null,
+  isAuthenticated: localStorage.getItem("isAuthenticated") === "true",
+  username: localStorage.getItem("username"),
   async signIn(username) {
     await new Promise((r) => setTimeout(r, 500)); // fake delay
+    localStorage.setItem("isAuthenticated", "true");
+    localStorage.setItem("username", username);
     fakeAuthProvider.isAuthenticated = true;
     fakeAuthProvider.username = username;
   },
   async signOut() {
     await new Promise((r) => setTimeout(r, 500)); // fake delay
+    localStorage.setItem("isAuthenticated", "false");
+    localStorage.removeItem("username");
     fakeAuthProvider.isAuthenticated = false;
     fakeAuthProvider.username = "";
   },
 };
 
 export async function loginAction({ request }) {
+  console.log("loginAction");
   const formData = await request.formData();
   const username = formData.get("username") | null;
 
@@ -47,7 +52,7 @@ export async function loginAction({ request }) {
 
 export async function loginLoader() {
   if (fakeAuthProvider.isAuthenticated) {
-    return redirect("/");
+    return redirect("/dashboard");
   }
   return null;
 }

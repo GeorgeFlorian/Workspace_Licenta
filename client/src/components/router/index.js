@@ -21,6 +21,12 @@ export const router = createBrowserRouter([
     Component: PageWrapper,
     children: [
       {
+        index: true,
+        loader({ user }) {
+          return redirect(user ? "/dashboard" : "/login");
+        },
+      },
+      {
         path: "login",
         action: loginAction,
         loader: loginLoader,
@@ -30,6 +36,10 @@ export const router = createBrowserRouter([
         path: "dashboard",
         loader: protectedLoader,
         Component: Dashboard,
+      },
+      {
+        path: "register",
+        Component: Register,
       },
     ],
   },
