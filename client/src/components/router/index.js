@@ -1,10 +1,14 @@
 import { createBrowserRouter, redirect } from "react-router-dom";
-import { fakeAuthProvider } from "@auth/auth";
 
 import PageWrapper from "@layout/PageWrapper";
 import { LoginPage, Dashboard, Register } from "@pages";
 
-import { loginAction, loginLoader, protectedLoader } from "@auth/auth";
+import {
+  loginAction,
+  loginLoader,
+  protectedLoader,
+  fakeAuthProvider,
+} from "@auth/auth";
 
 export const router = createBrowserRouter([
   {
