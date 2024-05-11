@@ -1,0 +1,26 @@
+# Node.js
+node_modules/
+
+# Logs
+*.log
+
+# Build directories
+/build/
+/dist/
+/out/
+
+# Dependency directories
+/yarn-error.log
+npm-debug.log*
+
+# Environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor directories
+.idea/
+.vscode/
+
+credentials.json
