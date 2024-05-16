@@ -1,17 +1,19 @@
 import { useFetcher } from "react-router-dom";
+import Button from "@mui/material/Button";
 
 const LogoutButton = () => {
   let fetcher = useFetcher();
   let isLoggingOut = fetcher.formData != null;
   return (
     <fetcher.Form method="post" action="/logout">
-      <button
-        type="submit"
+      <Button
+        variant="contained"
+        color="primary"
         disabled={isLoggingOut}
-        className="flex items-center justify-center bg-blue-500 hover:bg-blue-400 text-blue-200 hover:text-blue-800 rounded-md px-4 py-2 drop-shadow-lg"
+        type="submit"
       >
         {isLoggingOut ? "Signing out..." : "Sign out"}
-      </button>
+      </Button>
     </fetcher.Form>
   );
 };
