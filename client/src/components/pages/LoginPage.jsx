@@ -6,7 +6,7 @@ import {
   useNavigation,
 } from "react-router-dom";
 
-function Login() {
+function LoginPage() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const from = params.get("from") || "/";
@@ -17,9 +17,10 @@ function Login() {
   const actionData = useActionData();
 
   const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   return (
-    <div className="max-w-md mx-auto mt-8 p-4 bg-white shadow-md rounded-lg">
+    <div className="max-w-md mx-auto mt-8 p-4 bg-white shadow-lg drop-shadow-lg rounded-lg">
       <h2 className="text-2xl font-semibold mb-4">Login</h2>
 
       <Form method="post" className="space-y-4">
@@ -34,6 +35,20 @@ function Login() {
             name="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            className="border rounded px-3 py-2 w-full"
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="password" className="block">
+            Password:
+          </label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="border rounded px-3 py-2 w-full"
             required
           />
@@ -55,4 +70,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default LoginPage;
