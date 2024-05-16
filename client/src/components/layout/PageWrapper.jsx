@@ -6,7 +6,7 @@ export default function PageWrapper() {
   return (
     <div className="min-h-screen h-full w-full flex flex-col justify-between">
       <Header />
-      <div className="bg-white h-full flex flex-col justify-center gap-4 mx-auto my-auto max-w-screen-2xl">
+      <div className="flex-1 bg-white h-full w-full mx-auto max-w-screen-xl py-8">
         <Outlet />
       </div>
       <Footer />

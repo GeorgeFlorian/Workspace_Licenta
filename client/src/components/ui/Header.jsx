@@ -1,5 +1,6 @@
-import { useFetcher } from "react-router-dom";
+import { useFetcher, useRouteLoaderData } from "react-router-dom";
 import Button from "@mui/material/Button";
+import { Typography } from "@mui/material";
 
 const LogoutButton = () => {
   let fetcher = useFetcher();
@@ -19,9 +20,17 @@ const LogoutButton = () => {
 };
 
 export default function Header() {
+  const { user } = useRouteLoaderData("root");
   return (
-    <header className=" flex items-center justify-end w-full h-24 bg-gray-200 px-8">
-      <LogoutButton />
+    <header className="flex items-center w-full h-24 bg-gray-200 px-8">
+      <div className="flex items-center justify-between w-full mx-auto max-w-screen-xl">
+        <div>
+          <Typography variant="h4">Welcome {user}</Typography>
+        </div>
+        <div>
+          <LogoutButton />
+        </div>
+      </div>
     </header>
   );
 }
