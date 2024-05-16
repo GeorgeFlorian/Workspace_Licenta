@@ -6,7 +6,7 @@ export default function Dashboard() {
   let isLoggingOut = fetcher.formData != null;
 
   return (
-    <div>
+    <div className="mx-auto">
       <p>Welcome {user}!</p>
       <fetcher.Form method="post" action="/logout">
         <button type="submit" disabled={isLoggingOut}>

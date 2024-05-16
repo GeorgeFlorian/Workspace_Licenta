@@ -11,8 +11,4 @@
     @apply min-h-screen h-full;
   }
 
-  .PageWrapper {
-    @apply min-h-screen h-full;
-  }
-
 }

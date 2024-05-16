@@ -1,6 +1,6 @@
 import { createBrowserRouter, redirect } from "react-router-dom";
 
-import PageWrapper from "@layout/PageWrapper";
+import Layout from "@layout/Layout.jsx";
 import { LoginPage, Dashboard, Register, NotFound } from "@pages/";
 
 import {
@@ -9,6 +9,7 @@ import {
   protectedLoader,
   fakeAuthProvider,
 } from "@auth/auth";
+import PageWrapper from "@layout/PageWrapper.jsx";
 
 export const router = createBrowserRouter([
   {
@@ -18,7 +19,7 @@ export const router = createBrowserRouter([
       // Our root route always provides the user, if logged in
       return { user: fakeAuthProvider.username };
     },
-    Component: PageWrapper,
+    Component: Layout,
     children: [
       {
         index: true,
@@ -34,9 +35,15 @@ export const router = createBrowserRouter([
         Component: LoginPage,
       },
       {
-        path: "dashboard",
-        loader: protectedLoader,
-        Component: Dashboard,
+        Component: PageWrapper,
+        children: [
+          {
+            path: "dashboard",
+            loader: protectedLoader,
+            Component: Dashboard,
+          },
+          // Add more protected routes here
+        ],
       },
       {
         path: "register",
