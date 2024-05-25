@@ -480,4 +480,13 @@ app.post("/api/login", (req, res) => {
   }
 });
 
+app.post('/api/orar-grupa', (req, res) => {
+  const {an, serie, paritate, zi, finalOption} = req.body;
+  console.log('Received data:', {an, serie, paritate, zi, finalOption});
+
+  // Respond with a success message
+  res.status(200).json({message: 'Data received successfully'});
+});
+
+
 app.listen(1337, (req, res) => console.log("running on port 1337"));
