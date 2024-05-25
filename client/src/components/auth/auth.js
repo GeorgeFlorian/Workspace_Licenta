@@ -5,11 +5,18 @@ import { redirect } from "react-router-dom";
  */
 export const fakeAuthProvider = {
   isSessionExpired() {
-    const expiresAt = localStorage.getItem("expiresAt");
+    const username = localStorage.getItem("username");
+    if (!username) return true; // No user logged in
+
+    const expirationData =
+      JSON.parse(localStorage.getItem("expirationData")) || {};
+    const expiresAt = expirationData[username];
     return expiresAt && parseInt(expiresAt) < Date.now();
   },
   username: localStorage.getItem("username"),
   async signIn(username, password) {
+    await new Promise((r) => setTimeout(r, 500)); // fake delay
+
     try {
       const response = await fetch("/api/login", {
         method: "POST",
@@ -20,10 +27,14 @@ export const fakeAuthProvider = {
       });
 
       if (response.ok) {
-        // Successfully authenticated, update localStorage and redirect
-        // const data = await response.json();
+        // Successfully authenticated, update localStorage
         localStorage.setItem("username", username);
-        localStorage.setItem("expiresAt", Date.now() + 86400000); // 1 day expiration
+
+        const expirationData =
+          JSON.parse(localStorage.getItem("expirationData")) || {};
+        expirationData[username] = Date.now() + 86400000; // 1 day expiration
+        localStorage.setItem("expirationData", JSON.stringify(expirationData));
+
         fakeAuthProvider.username = username;
       } else {
         throw new Error("Invalid username or password");
@@ -35,8 +46,22 @@ export const fakeAuthProvider = {
   },
   async signOut() {
     await new Promise((r) => setTimeout(r, 500)); // fake delay
+
+    const username = localStorage.getItem("username");
+    if (username) {
+      const expirationData =
+        JSON.parse(localStorage.getItem("expirationData")) || {};
+      delete expirationData[username]; // Remove the expiration time for the user
+
+      // Only update localStorage if there are remaining entries
+      if (Object.keys(expirationData).length > 0) {
+        localStorage.setItem("expirationData", JSON.stringify(expirationData));
+      } else {
+        localStorage.removeItem("expirationData");
+      }
+    }
+
     localStorage.removeItem("username");
-    localStorage.removeItem("expiresAt");
     fakeAuthProvider.username = "";
   },
 };

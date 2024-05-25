@@ -24,8 +24,8 @@ export const router = createBrowserRouter([
       {
         index: true,
         loader() {
-          const user = fakeAuthProvider.username;
-          return redirect(user ? "/dashboard" : "/login");
+          const authenticated = fakeAuthProvider.username && fakeAuthProvider.isSessionExpired();
+          return redirect(authenticated ? "/dashboard" : "/login");
         },
       },
       {
