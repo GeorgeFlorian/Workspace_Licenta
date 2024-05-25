@@ -7,13 +7,13 @@ const Dashboard = () => {
   const [selectedOption, setSelectedOption] = useState(null);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-8">
       {/* Titlu */}
       <Typography variant="h4" className="mb-4">
         Genereaza Orar
       </Typography>
       {/* Butoane pentru alegerea orarului */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 self-center">
         <Typography variant="h6">Alege tipul orarului:</Typography>
         <div className="flex gap-4">
           <Button

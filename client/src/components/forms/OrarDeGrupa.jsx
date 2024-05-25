@@ -1,10 +1,10 @@
-import {useState} from 'react';
-import {Autocomplete, TextField, Box, Button} from '@mui/material';
+import { useState } from "react";
+import { Autocomplete, TextField, Box, Button, Grid } from "@mui/material";
 
 const anOptions = [1, 2, 3, 4];
-const serieOptions = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
-const paritateOptions = ['par', 'impar'];
-const ziOptions = ['luni', 'marti', 'miercuri', 'joi', 'vineri'];
+const serieOptions = ["A", "B", "C", "D", "E", "F", "G"];
+const paritateOptions = ["par", "impar"];
+const ziOptions = ["luni", "marti", "miercuri", "joi", "vineri"];
 
 const OrarDeGrupa = () => {
   const [an, setAn] = useState(null);
@@ -41,13 +41,17 @@ const OrarDeGrupa = () => {
   const handleZiChange = (event, value) => {
     setZi(value);
     setGrupa(null);
+    setForm([]);
     if (an !== null && serie !== null && paritate !== null) {
-      generateFinalOptions(an, serie);
+      generateForm(an, serie);
     }
   };
 
-  const generateFinalOptions = (an, serie) => {
-    const options = Array.from({length: 5}, (_, index) => `4${an}${index + 1}${serie}`);
+  const generateForm = (an, serie) => {
+    const options = Array.from(
+      { length: 5 },
+      (_, index) => `4${an}${index + 1}${serie}`,
+    );
     setForm(options);
   };
 
@@ -61,75 +65,104 @@ const OrarDeGrupa = () => {
       serie,
       paritate,
       zi,
-      finalOption: grupa,
+      grupa,
     };
 
     try {
-      const response = await fetch('/api/orar-grupa', {
-        method: 'POST',
+      const response = await fetch("/api/orar-grupa", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error("Network response was not ok");
       }
 
       const result = await response.json();
-      console.log('Success:', result);
+      console.log("Success:", result);
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     }
   };
 
   return (
-    <Box sx={{display: 'flex', flexDirection: 'column', gap: 2, width: 300}}>
-      <Autocomplete
-        options={anOptions}
-        value={an}
-        onChange={handleAnChange}
-        getOptionLabel={(option) => option.toString()}
-        renderInput={(params) => <TextField {...params} label="An"/>}
-      />
-      {an !== null && (
-        <Autocomplete
-          options={serieOptions}
-          value={serie}
-          onChange={handleSerieChange}
-          renderInput={(params) => <TextField {...params} label="Serie"/>}
-        />
-      )}
-      {an !== null && serie !== null && (
-        <Autocomplete
-          options={paritateOptions}
-          value={paritate}
-          onChange={handleParitateChange}
-          renderInput={(params) => <TextField {...params} label="Paritate"/>}
-        />
-      )}
-      {an !== null && serie !== null && paritate !== null && (
-        <Autocomplete
-          options={ziOptions}
-          value={zi}
-          onChange={handleZiChange}
-          renderInput={(params) => <TextField {...params} label="Zi"/>}
-        />
-      )}
-      {an !== null && serie !== null && paritate !== null && zi !== null && (
-        <Autocomplete
-          options={form}
-          value={grupa}
-          onChange={handleGrupaChange}
-          renderInput={(params) => <TextField {...params} label="Grupa"/>}
-        />
-      )}
-      {an !== null && serie !== null && paritate !== null && zi !== null && grupa !== null && (
-        <Button variant="contained" onClick={handleSubmit}>
-          Submit
-        </Button>
-      )}
+    <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
+      <Grid container spacing={2} sx={{ width: { xs: "100%", sm: "50%" } }}>
+        <Grid item xs={12} sm={6}>
+          <Autocomplete
+            options={anOptions}
+            value={an}
+            onChange={handleAnChange}
+            getOptionLabel={(option) => option.toString()}
+            renderInput={(params) => <TextField {...params} label="An" />}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          {an !== null && (
+            <Autocomplete
+              options={serieOptions}
+              value={serie}
+              onChange={handleSerieChange}
+              getOptionLabel={(option) => option}
+              renderInput={(params) => <TextField {...params} label="Serie" />}
+            />
+          )}
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          {an !== null && serie !== null && (
+            <Autocomplete
+              options={paritateOptions}
+              value={paritate}
+              onChange={handleParitateChange}
+              getOptionLabel={(option) => option}
+              renderInput={(params) => (
+                <TextField {...params} label="Paritate" />
+              )}
+            />
+          )}
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          {an !== null && serie !== null && paritate !== null && (
+            <Autocomplete
+              options={ziOptions}
+              value={zi}
+              onChange={handleZiChange}
+              getOptionLabel={(option) => option}
+              renderInput={(params) => <TextField {...params} label="Zi" />}
+            />
+          )}
+        </Grid>
+        <Grid item xs={12}>
+          {an !== null &&
+            serie !== null &&
+            paritate !== null &&
+            zi !== null && (
+              <Autocomplete
+                options={form}
+                value={grupa}
+                onChange={handleGrupaChange}
+                getOptionLabel={(option) => option}
+                renderInput={(params) => (
+                  <TextField {...params} label="Grupa" />
+                )}
+              />
+            )}
+        </Grid>
+        <Grid item xs={12} sx={{ display: "flex", justifyContent: "center" }}>
+          {an !== null &&
+            serie !== null &&
+            paritate !== null &&
+            zi !== null &&
+            grupa !== null && (
+              <Button variant="contained" onClick={handleSubmit}>
+                Submit
+              </Button>
+            )}
+        </Grid>
+      </Grid>
     </Box>
   );
 };
