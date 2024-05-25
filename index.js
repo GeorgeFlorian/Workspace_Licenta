@@ -613,4 +613,12 @@ app.post("/api/orar-grupa", (req, res) => {
   res.status(200).json({ message: "Data received successfully" });
 });
 
+app.post("/api/orar-sala", (req, res) => {
+  const { sala, zi } = req.body;
+  console.log("Received data:", { sala, zi });
+
+  // Respond with a success message
+  res.status(200).json({ message: "Data received successfully" });
+});
+
 app.listen(1337, (req, res) => console.log("running on port 1337"));
