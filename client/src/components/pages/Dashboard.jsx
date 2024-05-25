@@ -13,7 +13,7 @@ const Dashboard = () => {
         Genereaza Orar
       </Typography>
       {/* Butoane pentru alegerea orarului */}
-      <div className="flex items-center gap-4 self-center">
+      <div className="flex flex-wrap items-center gap-4 self-center">
         <Typography variant="h6">Alege tipul orarului:</Typography>
         <div className="flex gap-4">
           <Button

@@ -22,8 +22,8 @@ const LogoutButton = () => {
 export default function Header() {
   const { user } = useRouteLoaderData("root");
   return (
-    <header className="flex items-center w-full h-24 bg-gray-200 px-8">
-      <div className="flex items-center justify-between w-full mx-auto max-w-screen-xl">
+    <header className="flex items-center w-full h-24 bg-gray-200">
+      <div className="flex items-center justify-between w-full mx-auto max-w-screen-xl px-8">
         <div>
           <Typography variant="h4">Welcome {user}</Typography>
         </div>

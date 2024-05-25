@@ -90,7 +90,7 @@ const OrarDeGrupa = () => {
 
   return (
     <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
-      <Grid container spacing={2} sx={{ width: { xs: "100%", sm: "50%" } }}>
+      <Grid container spacing={2} sx={{ width: { sm: "75%", md: "50%" } }}>
         <Grid item xs={12} sm={6}>
           <Autocomplete
             options={anOptions}
