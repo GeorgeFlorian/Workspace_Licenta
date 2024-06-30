@@ -1,34 +1,33 @@
-import { useFetcher, useRouteLoaderData } from "react-router-dom";
 import Button from "@mui/material/Button";
 import { Typography } from "@mui/material";
+import { useContext } from "react";
+import { AuthContext } from "@/context/AuthContext.jsx";
+import { useLogout } from "@/hooks/useLogout.js";
 
-const LogoutButton = () => {
-  let fetcher = useFetcher();
-  let isLoggingOut = fetcher.formData != null;
+const LogoutButton = ({ user }) => {
+  const { logout } = useLogout();
   return (
-    <fetcher.Form method="post" action="/logout">
-      <Button
-        variant="contained"
-        color="primary"
-        disabled={isLoggingOut}
-        type="submit"
-      >
-        {isLoggingOut ? "Signing out..." : "Sign out"}
-      </Button>
-    </fetcher.Form>
+    <Button variant="contained" color="primary" type="submit" onClick={logout}>
+      Sign out
+    </Button>
   );
 };
 
 export default function Header() {
-  const { user } = useRouteLoaderData("root");
+  const { user } = useContext(AuthContext);
+
+  if (!user) {
+    return null;
+  }
+
   return (
     <header className="flex items-center w-full h-24 bg-gray-200">
       <div className="flex items-center justify-between w-full mx-auto max-w-screen-xl px-8">
         <div>
-          <Typography variant="h4">Welcome {user}</Typography>
+          <Typography variant="h4">Welcome {user.username}</Typography>
         </div>
         <div>
-          <LogoutButton />
+          <LogoutButton user={user} />
         </div>
       </div>
     </header>

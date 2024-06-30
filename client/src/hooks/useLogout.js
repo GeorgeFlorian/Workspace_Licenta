@@ -1,18 +1,18 @@
-import { useAuthContext } from './useAuthContext'
-import { useWorkoutsContext } from './useWorkoutsContext'
+import { useAuthContext } from "./useAuthContext";
+import { useNavigate } from "react-router-dom";
 
 export const useLogout = () => {
-  const { dispatch } = useAuthContext()
-  const { dispatch: dispatchWorkouts } = useWorkoutsContext()
+  const navigate = useNavigate();
+  const { dispatch } = useAuthContext();
 
   const logout = () => {
     // remove user from storage
-    localStorage.removeItem('user')
+    localStorage.removeItem("user");
 
     // dispatch logout action
-    dispatch({ type: 'LOGOUT' })
-    dispatchWorkouts({ type: 'SET_WORKOUTS', payload: null })
-  }
+    dispatch({ type: "LOGOUT" });
+    navigate("/");
+  };
 
-  return { logout }
-}
+  return { logout };
+};

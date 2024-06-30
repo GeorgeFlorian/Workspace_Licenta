@@ -1,37 +1,32 @@
 import { useState } from "react";
-import {
-  Form,
-  useActionData,
-  useNavigation,
-  Link,
-} from "react-router-dom";
+import { Form, Link } from "react-router-dom";
 import { useSignup } from "@/hooks/useSignUp";
 
-
 function RegisterPage() {
-  const navigation = useNavigation();
-  const isRegistering = !!navigation.formData?.get("username");
+  const [newUser, setNewUser] = useState({
+    email: "",
+    firstName: "",
+    lastName: "",
+    username: "",
+    password: "",
+  });
+  const { signup, error, isLoading } = useSignup();
 
-  const actionData = useActionData();
-
-  const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const {signup, error, isLoading} = useSignup()
+  const setValue = (key) => (e) => {
+    setNewUser({ ...newUser, [key]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    await signup(email, password)
-  }
+    await signup(newUser);
+  };
 
   return (
     <div className="max-w-md mx-auto mt-8 p-4 bg-white shadow-lg drop-shadow-lg rounded-lg">
       <h2 className="text-2xl font-semibold mb-4">Register</h2>
 
-      <Form method="post" className="space-y-4">
+      <Form method="post" className="space-y-4" onSubmit={handleSubmit}>
         <div>
           <label htmlFor="email" className="block">
             Email:
@@ -40,8 +35,8 @@ function RegisterPage() {
             type="email"
             id="email"
             name="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={newUser.email}
+            onChange={(e) => setValue("email")(e)}
             className="border rounded px-3 py-2 w-full"
             required
           />
@@ -54,8 +49,8 @@ function RegisterPage() {
             type="text"
             id="firstName"
             name="firstName"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            value={newUser.firstName}
+            onChange={(e) => setValue("firstName")(e)}
             className="border rounded px-3 py-2 w-full"
             required
           />
@@ -68,8 +63,8 @@ function RegisterPage() {
             type="text"
             id="lastName"
             name="lastName"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            value={newUser.lastName}
+            onChange={(e) => setValue("lastName")(e)}
             className="border rounded px-3 py-2 w-full"
             required
           />
@@ -82,8 +77,8 @@ function RegisterPage() {
             type="text"
             id="username"
             name="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={newUser.username}
+            onChange={(e) => setValue("username")(e)}
             className="border rounded px-3 py-2 w-full"
             required
           />
@@ -96,8 +91,8 @@ function RegisterPage() {
             type="password"
             id="password"
             name="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={newUser.password}
+            onChange={(e) => setValue("password")(e)}
             className="border rounded px-3 py-2 w-full"
             required
           />
@@ -105,10 +100,10 @@ function RegisterPage() {
         <div>
           <button
             type="submit"
-            disabled={isRegistering}
+            disabled={isLoading}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-300"
           >
-            {isRegistering ? "Registering..." : "Register"}
+            {isLoading ? "Registering..." : "Register"}
           </button>
           <Link
             to="/login"
@@ -118,9 +113,7 @@ function RegisterPage() {
           </Link>
         </div>
       </Form>
-      {actionData && actionData.error && (
-        <p className="text-red-500 mt-2">{actionData.error}</p>
-      )}
+      {error && <p className="text-red-500 mt-2">{error}</p>}
     </div>
   );
 }

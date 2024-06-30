@@ -1,31 +1,28 @@
 import { useState } from "react";
-import {
-  Form,
-  useActionData,
-  useLocation,
-  useNavigation,
-  Link,
-} from "react-router-dom";
-import { useLogin } from "../../hooks/useLogin"
+import { Form, useLocation, Link } from "react-router-dom";
+import { useLogin } from "@/hooks/useLogin.js";
 
 function LoginPage() {
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const from = params.get("from") || "/";
 
-  const navigation = useNavigation();
-  const isLoggingIn = !!navigation.formData?.get("username");
-
-  const actionData = useActionData();
+  const { login, isLoading, error } = useLogin();
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+
+    await login(username, password);
+  };
 
   return (
     <div className="max-w-md mx-auto mt-8 p-4 bg-white shadow-lg drop-shadow-lg rounded-lg">
       <h2 className="text-2xl font-semibold mb-4">Login</h2>
 
-      <Form method="post" className="space-y-4">
+      <Form method="post" className="space-y-4" onSubmit={onSubmit}>
         <input type="hidden" name="redirectTo" value={from} />
         <div>
           <label htmlFor="username" className="block">
@@ -58,10 +55,10 @@ function LoginPage() {
         <div>
           <button
             type="submit"
-            disabled={isLoggingIn}
+            disabled={isLoading}
             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors duration-300"
           >
-            {isLoggingIn ? "Logging in..." : "Login"}
+            {isLoading ? "Logging in..." : "Login"}
           </button>
           <Link
             to="/register"
@@ -71,9 +68,7 @@ function LoginPage() {
           </Link>
         </div>
       </Form>
-      {actionData && actionData.error && (
-        <p className="text-red-500 mt-2">{actionData.error}</p>
-      )}
+      {error && <p className="text-red-500 mt-2">{error}</p>}
     </div>
   );
 }
