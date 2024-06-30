@@ -4,22 +4,22 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
 
-const salaOptions = ["B306", "B212", "A101", "A102", "B219a", "B312", "A103", "A05", "B110", "B219b", "A03", "B206a", "B223a", "Sala Orange"];
+const profesorOptions = ["M. Frunzete", "T. Petrescu", "A. Bordianu", "A. Niță", "D. Ionita", "R. Purnichescu", "B. Ionescu", "V. Paltanea", "M. Stafe", "H. Cucu"];
 
-const OrarDeSala = () => {
-  const [sala, setSala] = useState(null);
+const OrarDeProfesor = () => {
+  const [profesor, setProfesor] = useState(null);
 
-  const handleSalaChange = (event, value) => {
-    setSala(value);
+  const handleProfesorChange = (event, value) => {
+    setProfesor(value);
   };
 
   const handleSubmit = async () => {
     const params = new URLSearchParams({
-      sala,
+      profesor,
     }).toString();
 
     try {
-      const response = await fetch(`/api/orar-sala?${params}`, {
+      const response = await fetch(`/api/orar-profesor?${params}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ const OrarDeSala = () => {
       const result = await response.json();
         
       const doc = new jsPDF();
-  
+
       // Title styling
       doc.setFontSize(18);
       doc.setTextColor(40, 40, 40);
@@ -44,28 +44,45 @@ const OrarDeSala = () => {
       doc.line(10, 20, 200, 20);
   
       // Prepare the data for the table
-      const tableColumn = ["Ora", "Materie"];
+      const tableColumns = ["Zi", "An", "Materie", "Ora", "Sala"];
       const tableRows = [];
   
+      let lastDay = null; // Variable to store the last processed day
+  
       Object.entries(result.program).forEach(([day, entries]) => {
-        // Add a row for the day
-        tableRows.push([{ content: day, colSpan: 2, styles: { halign: 'center', fillColor: [230, 230, 230] } }]);
-        // Add rows for each entry under the day
-        entries.forEach(entry => {
-          tableRows.push([entry.ora, entry.materie]);
+        entries.forEach((entry, index) => {
+          // Add the day only for the first entry of each day
+          if (index === 0 || day !== lastDay) {
+            tableRows.push([
+              { content: day, rowSpan: entries.length, styles: { halign: 'center', fillColor: [230, 230, 230] } },
+              entry.anulSiSeria,
+              entry.materie,
+              entry.ora,
+              entry.sala
+            ]);
+          } else {
+            tableRows.push([
+              "", // Leave this column empty for subsequent entries of the same day
+              entry.anulSiSeria,
+              entry.materie,
+              entry.ora,
+              entry.sala
+            ]);
+          }
+          lastDay = day; // Update lastDay to the current day
         });
       });
-
+  
       // Add the table to the PDF
       doc.autoTable({
         startY: 30,
-        head: [tableColumn],
+        head: [tableColumns],
         body: tableRows,
         styles: { cellPadding: 3, fontSize: 10 },
-        headStyles: { fillColor: [52, 73, 94] },
+        headStyles: { fillColor: [52, 73, 94], textColor: [255, 255, 255] },
         alternateRowStyles: { fillColor: [245, 245, 245] },
       });
-
+  
       // Save the PDF and open it in a new window
       const pdfOutput = doc.output('blob');
       const pdfUrl = URL.createObjectURL(pdfOutput);
@@ -81,15 +98,15 @@ const OrarDeSala = () => {
       <Grid container spacing={2} sx={{ width: { sm: "75%", md: "50%"}}}>
         <Grid item xs={12} sm={6} sx={{marginInline: "auto"}}>
           <Autocomplete
-            options={salaOptions}
-            value={sala}
-            onChange={handleSalaChange}
+            options={profesorOptions}
+            value={profesor}
+            onChange={handleProfesorChange}
             getOptionLabel={(option) => option}
-            renderInput={(params) => <TextField {...params} label="Sala" />}
+            renderInput={(params) => <TextField {...params} label="Profesor" />}
           />
         </Grid>
         <Grid item xs={12} sx={{ display: "flex", justifyContent: "center" }}>
-          {sala !== null  && (
+          {profesor !== null  && (
             <Button variant="contained" onClick={handleSubmit}>
               Submit
             </Button>
@@ -100,4 +117,4 @@ const OrarDeSala = () => {
   );
 };
 
-export default OrarDeSala;
+export default OrarDeProfesor;

@@ -1,0 +1,49 @@
+{
+    "type": "object",
+    "properties": {
+      "numeOrar": {
+        "type": "string",
+        "description": "Numele orarului, include anul și seria"
+      },
+      "zi": {
+        "type": "string",
+        "description": "Ziua săptămânii"
+      },
+      "saptamana": {
+        "type": "string",
+        "description": "Tipul săptămânii, par sau impar"
+      },
+      "grupa": {
+        "type": "string",
+        "description": "Grupa de studiu"
+      },
+      "orar": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "ora": {
+              "type": "string",
+              "description": "Intervalul orar pentru curs"
+            },
+            "materie": {
+              "type": "string",
+              "description": "Numele materiei și tipul (curs/seminar/laborator)"
+            },
+            "profesor": {
+              "type": "string",
+              "description": "Numele profesorului"
+            },
+            "sala": {
+                "type": "string",
+                "description": "Numele salii"
+            }
+          },
+          "required": ["ora", "materie"]
+        },
+        "description": "Lista cursurilor dintr-o zi"
+      }
+    },
+    "required": ["numeOrar", "zi", "saptamana", "grupa", "orar"]
+  }
+  

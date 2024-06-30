@@ -4,7 +4,9 @@ import {
   useActionData,
   useLocation,
   useNavigation,
+  Link,
 } from "react-router-dom";
+import { useLogin } from "../../hooks/useLogin"
 
 function LoginPage() {
   const location = useLocation();
@@ -61,6 +63,12 @@ function LoginPage() {
           >
             {isLoggingIn ? "Logging in..." : "Login"}
           </button>
+          <Link
+            to="/register"
+            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors duration-300 ml-4"
+          >
+            Register
+          </Link>
         </div>
       </Form>
       {actionData && actionData.error && (

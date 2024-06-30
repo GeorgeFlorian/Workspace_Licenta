@@ -1,7 +1,9 @@
+require('dotenv').config()
 const express = require("express");
-const { google } = require("googleapis");
-const app = express();
-
+const { google } = require("googleapis")
+const app = express()
+const mongoose = require('mongoose')
+const userRoutes = require('./routes/user')
 app.use(express.json());
 
 const threeHoursLabs = ["AMP", "CCP", "DE", "IEM", "TAPDS", "DOE", "G3D", "SECR", "RC", "TIVM", "BTM", "TPSVLSI", "3DG", "CA"]; 
@@ -36,6 +38,7 @@ async function getSheetColumnsAndLinesNumber(auth, spreadSheetId, sheetName) {
         return { rowCount: 0, columnCount: 0 };
     }
 }
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function getDayRange(auth, spreadSheetId, an, zi, columnCount) {
     const sheets = google.sheets({ version: "v4", auth: auth });
     const sheetName = "AN " + an;
@@ -173,7 +176,6 @@ async function getDailyScheduleOfGroup(auth, spreadSheetId, an, zi, columnCount,
     //console.log("Object orar: " + JSON.stringify(objectToReturn));
     return objectToReturn;
 }
-
 function mergeAndSortArrays(array1, array2) {
     // Concatenate the two arrays
     const mergedArray = array1.concat(array2);
@@ -429,8 +431,6 @@ async function getSeriesIntervals(array) {
             seriesStartIndex = i + 1;          
         }
     }
-    console.log("Series extrasa din: {}", series);
-    console.log("Series extrasa din: {}", seriesIntervals);
     const combinedArray = series.map((value, index) => {
         return {"serie": value, "interval": seriesIntervals[index]};
     });
@@ -452,21 +452,254 @@ async function extractSeries(input) {
     }
 }
 
+async function getSheetColumnsAndLinesNumberForMultipleSheets(auth, spreadSheetId, sheetNames) {
+    const sheets = google.sheets({ version: "v4", auth: auth });
+    try {
+        const response = await sheets.spreadsheets.get({
+            spreadsheetId: spreadSheetId
+        });
+
+        const results = sheetNames.map(sheetName => {
+            const sheet = response.data.sheets.find(sheet => sheet.properties.title === sheetName);
+            if (!sheet) {
+                throw new Error(`Sheet '${sheetName}' not found.`);
+            }
+
+            const properties = sheet.properties;
+            const rowCount = properties.gridProperties.rowCount;
+            const columnCount = properties.gridProperties.columnCount;
+            return { sheetName, rowCount, columnCount };
+        });
+
+        return results;
+    } catch (err) {
+        console.error('The API returned an error:', err);
+        return sheetNames.map(sheetName => ({ sheetName, rowCount: 0, columnCount: 0 }));
+    }
+}
+
+async function searchValuesInAllSheets(auth, sala, columnsCounts, seriesRanges) {
+    const sheets = google.sheets({ version: 'v4', auth });
+    const spreadsheetId = '1LzBgIlGlCowjvNuh7BuBYDGagXa8XHwzs_PAYWxcQWY';
+    const targetSheets = ['AN 1', 'AN 2', 'AN 3', 'AN 4'];
+    const daysOfWeek = ['luni', 'marti', 'miercuri', 'joi', 'vineri'];
+
+    let orarSala = {
+        nume: `Orar sala ${sala}`,
+        program: {
+            luni: [],
+            marti: [],
+            miercuri: [],
+            joi: [],
+            vineri: []
+        }
+    };
+
+    // Cache for day ranges
+    const dayRangesCache = {};
+
+    // Fetch day ranges for all sheets and cache them
+    const fetchDayRanges = async () => {
+        for (const sheet of targetSheets) {
+            const an = sheet.split(' ')[1];
+            const columnCount = columnsCounts[parseInt(an) - 1];
+            if (!dayRangesCache[an]) {
+                dayRangesCache[an] = await getDayRanges(auth, spreadsheetId, an, columnCount);
+            }
+        }
+    };
+
+    await fetchDayRanges();
+
+    const getDataForSheet = async (sheet, day) => {
+        const an = sheet.split(' ')[1];
+        const columnCount = columnsCounts[parseInt(an) - 1];
+        const serieRange = seriesRanges[parseInt(an) - 1];
+        const dayRange = dayRangesCache[an][day];
+
+        if (dayRange) {
+            const [startRow, endRow] = dayRange;
+            const sheetRange = `${sheet}!B${startRow}:${serieRange.end}${endRow}`;
+            return sheets.spreadsheets.values.batchGet({
+                spreadsheetId,
+                ranges: [sheetRange],
+            }).then(response => {
+                const rows = response.data.valueRanges[0].values;
+                if (rows) {
+                    return rows.flatMap((row, rowIndex) => {
+                        return row.map((cell, colIndex) => {
+                            if (cell.includes(sala)) {
+                                for (let leftIndex = colIndex - 1; leftIndex >= 0; leftIndex--) {
+                                    if (row[leftIndex] && (row[leftIndex].includes('curs') || row[leftIndex].includes('lecture'))) {
+                                        const ora = row[0];
+                                        return {
+                                            ora: extendTimeRange(ora, 1),
+                                            materie: row[leftIndex].replace(/\n/g, ' '),
+                                            zi: day
+                                        };
+                                    }
+                                }
+                            }
+                            return null;
+                        }).filter(item => item !== null);
+                    });
+                }
+                return [];
+            });
+        } else {
+            console.log(`Day range not found for day '${day}' in sheet '${sheet}'.`);
+            return [];
+        }
+    };
+
+    const allDataPromises = [];
+    for (const sheet of targetSheets) {
+        for (const day of daysOfWeek) {
+            allDataPromises.push((async () => {
+                await delay(50); // Delay to prevent rate limit
+                return getDataForSheet(sheet, day);
+            })());
+        }
+    }
+
+    const allData = await Promise.all(allDataPromises);
+    const ore = allData.flat();
+
+    ore.forEach(item => {
+        orarSala.program[item.zi].push(item);
+    });
+
+    const uniqueOrarSala = removeDuplicates(orarSala);
+
+    Object.keys(uniqueOrarSala.program).forEach(day => {
+        uniqueOrarSala.program[day].sort((a, b) => {
+            const getStartHour = (timeRange) => parseInt(timeRange.split('-')[0], 10);
+            return getStartHour(a.ora) - getStartHour(b.ora);
+        });
+    });
+
+    return uniqueOrarSala;
+}
 
 
+async function getDayRanges(auth, spreadSheetId, an, columnCount) {
+    const sheets = google.sheets({ version: "v4", auth: auth });
+    const sheetName = "AN " + an;
+    const range = sheetName + "!A1:A" + columnCount;
+    const response = await sheets.spreadsheets.values.get({
+        spreadsheetId: spreadSheetId,
+        range: range
+    });
 
-// Dummy data
-const data = { message: "Hello from Express!" };
+    const values = response.data.values;
+    const daysOfWeek = ['luni', 'marti', 'miercuri', 'joi', 'vineri']; // Adjust if necessary
+    const dayRanges = {};
 
-// Route to get the dummy data
-app.get("/api/data", (req, res) => {
-  res.json(data);
+    for (const day of daysOfWeek) {
+        for (let i = 0; i < values.length; i++) {
+            if (values[i].length !== 0 && values[i][0].toLowerCase() === day) {
+                dayRanges[day] = [i + 1, i + 13];
+                break; // Stop after finding the first occurrence
+            }
+        }
+
+        if (!dayRanges[day]) {
+            console.log(`Day '${day}' not found in the spreadsheet.`);
+        }
+    }
+
+    return dayRanges;
+}
+async function getSeriesRange(auth, spreadSheetId, ani) {
+    const sheets = google.sheets({ version: "v4", auth: auth });
+    let intervalePerSheet = [];
+    for (const an of ani) {
+        const sheetName = an;
+        const range = sheetName + "!B1:1"; // Assuming the series are in the first row
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: spreadSheetId,
+            range: range
+        });
+        const values = response.data.values[0];     
+        const intervals = await getSeriesIntervals(values);
+        const pereche = {start: intervals[0].interval[0],
+            end: intervals[intervals.length-1].interval[1]
+        };
+        intervalePerSheet.push(pereche);
+    }
+
+    return intervalePerSheet;
+
+}
+
+//connect to the database
+mongoose.connect(process.env.MONG_URI)
+.then(() => {
+    app.listen(process.env.PORT, (req, res) => console.log("running on port 1337"));
+})
+.catch((error) => {
+    console.log(error);
+});
+app.post("/api/user/register", async (req, res) => {
+    const { email, firstName, lastName, username, password } = req.body;
+
+    try {
+        const userExists = await User.findOne({ $or: [{ email }, { username }] });
+
+        if (userExists) {
+            return res.status(409).json({ error: "Username or email already exists" });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hash = await bcrypt.hash(password, salt);
+
+        const user = new User({
+            email,
+            firstName,
+            lastName,
+            username,
+            password: hash,
+        });
+
+        await user.save();
+
+        res.status(201).json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
 
+// Login user
+app.post("/api/user/login", async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+        const user = await User.findOne({ username });
+
+        if (!user) {
+            return res.status(401).json({ error: "Invalid username or password" });
+        }
+
+        const match = await bcrypt.compare(password, user.password);
+
+        if (!match) {
+            return res.status(401).json({ error: "Invalid username or password" });
+        }
+
+        const token = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '3d' });
+
+        res.status(200).json({ username, token });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+app.use('/api/user', userRoutes)
 // Simulated user data
 const users = [
-  { username: "user1", password: "password1" },
-  { username: "user2", password: "password2" },
+  { username: "user1", password: "password1", email: "user1@gmail.com", firstName: "user1", lastName: "user" },
+  { username: "user2", password: "password2", email: "user2@gmail.com", firstName: "user2", lastName: "user" },
 ];
 
 app.post("/api/login", (req, res) => {
@@ -482,6 +715,24 @@ app.post("/api/login", (req, res) => {
     res.status(401).json({ error: "Invalid username or password" });
   }
 });
+
+app.post("/api/register", (req, res) => {
+    const { email, firstName, lastName, username, password } = req.body;
+    // Attempt to find user by username and password
+    const user = users.find(
+        (user) => user.username === username || user.email === email,
+    );
+    if (user) {
+      res.status(409).json({ error: "Username or email already exists" });
+    } else {
+        users.push({ username: username, password: password, email: email, firstName: firstName, lastName: lastName });
+        res.json({ success: true });
+    }
+  });
+function removeDiacritics(str) {
+    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
 
 app.get("/api/orar-grupa", async (req, res) => {
   const { an, serie, paritate, semigrupa, zi, grupa } = req.query;
@@ -501,7 +752,7 @@ app.get("/api/orar-grupa", async (req, res) => {
     spreadSheetName,
   );
   const anAsInt = parseInt(an);
-  const orarGrupaSelectata = await getDailyScheduleOfGroup(
+  let orarGrupaSelectata = await getDailyScheduleOfGroup(
     client,
     spreadSheetId,
     anAsInt,
@@ -511,15 +762,232 @@ app.get("/api/orar-grupa", async (req, res) => {
     serie,
     paritate,
   );
-  res.send(orarGrupaSelectata);
+  let objToString = removeDiacritics(JSON.stringify(orarGrupaSelectata));
+  console.log("String wihtout diactrics: " + objToString);
+  let objWithoutDiacritics = JSON.parse(objToString);
+  res.send(objWithoutDiacritics);
 });
 
-app.post("/api/orar-sala", (req, res) => {
-  const { sala, zi } = req.body;
-  console.log("Received data:", { sala, zi });
+app.get("/api/orar-profesor", async (req, res) => {
+    console.log('Am intrat in prof endpoint');
+    const { profesor } = req.query;
+    console.log("Profesor is " + profesor);
+    const auth = new google.auth.GoogleAuth({
+      keyFile: "credentials.json",
+      scopes: "https://www.googleapis.com/auth/spreadsheets"
+    });
+      const client = await auth.getClient();
+      const sheetsNames = ['AN 1', 'AN 2', 'AN 3', 'AN 4'];
+      const spreadSheetId = "1LzBgIlGlCowjvNuh7BuBYDGagXa8XHwzs_PAYWxcQWY";
+  
+      try {
+          // Fetch columns and rows count for all sheets in parallel
+          const sheetColumnsAndLines = await getSheetColumnsAndLinesNumberForMultipleSheets(client, spreadSheetId, sheetsNames);
+  
+          // Extract column counts
+          const columnsCounts = sheetColumnsAndLines.map(sheet => sheet.columnCount);
+  
+          // Fetch series ranges (assuming getSeriesRange function exists)
+          const seriesRange1 = await getSeriesRange(client, spreadSheetId, sheetsNames);
+  
+          // Use the searchValuesInAllSheets function to get the schedule for the entire week
+          const profesorResult = await searchTeacherInAllSheets(client, profesor, columnsCounts, seriesRange1);
+          let objToString = removeDiacritics(JSON.stringify(profesorResult));
+          console.log("String wihtout diactrics: " + objToString);
+          let objWithoutDiacritics = JSON.parse(objToString);
+          res.send(objWithoutDiacritics);
+  
+  } catch (error) {
+      console.error('Error occurred:', error);
+      res.status(500).send('An error occurred while processing your request.');
+  }
+  });
 
-  // Respond with a success message
-  res.status(200).json({ message: "Data received successfully" });
+app.get("/api/orar-sala", async (req, res) => {
+  const { sala, zi } = req.query;
+  console.log("Sala is " + sala);
+  const auth = new google.auth.GoogleAuth({
+    keyFile: "credentials.json",
+    scopes: "https://www.googleapis.com/auth/spreadsheets"
+  });
+    const client = await auth.getClient();
+    const sheetsNames = ['AN 1', 'AN 2', 'AN 3', 'AN 4'];
+    const spreadSheetId = "1LzBgIlGlCowjvNuh7BuBYDGagXa8XHwzs_PAYWxcQWY";
+
+    try {
+        // Fetch columns and rows count for all sheets in parallel
+        const sheetColumnsAndLines = await getSheetColumnsAndLinesNumberForMultipleSheets(client, spreadSheetId, sheetsNames);
+
+        // Extract column counts
+        const columnsCounts = sheetColumnsAndLines.map(sheet => sheet.columnCount);
+
+        // Fetch series ranges (assuming getSeriesRange function exists)
+        const seriesRange1 = await getSeriesRange(client, spreadSheetId, sheetsNames);
+
+        // Use the searchValuesInAllSheets function to get the schedule for the entire week
+        const salaResult = await searchValuesInAllSheets(client, sala, columnsCounts, seriesRange1);
+        let objToString = removeDiacritics(JSON.stringify(salaResult));
+        let objWithoutDiacritics = JSON.parse(objToString);
+        console.log("String wihtout diactrics: " + objToString);
+        res.send(objWithoutDiacritics);
+
+} catch (error) {
+    console.error('Error occurred:', error);
+    res.status(500).send('An error occurred while processing your request.');
+}
 });
 
-app.listen(1337, (req, res) => console.log("running on port 1337"));
+
+function removeDuplicates(schedule) {
+const uniqueItems = new Set();
+const uniqueSchedule = {};
+
+Object.keys(schedule.program).forEach(day => {
+    uniqueSchedule[day] = [];
+    schedule.program[day].forEach(item => {
+        const itemString = JSON.stringify(item);
+        if (!uniqueItems.has(itemString)) {
+            uniqueItems.add(itemString);
+            uniqueSchedule[day].push(item);
+        }
+    });
+});
+
+return {
+    nume: schedule.nume,
+    program: uniqueSchedule
+};
+}
+
+  function findSubject(professorName, data) {
+    // Împarte datele inițiale în segmente individuale pe baza delimitatorilor
+    const segments = data.split(/[\|\|\/]/);
+
+    // Iterează prin fiecare segment
+    for (let segment of segments) {
+        // Verifică dacă segmentul conține numele profesorului
+        if (segment.includes(professorName)) {
+            // Extrage și returnează materia folosind o expresie regulată
+            const match = segment.match(/([\w\s]+)\s*\(curs\)/);
+            if (match) {
+                return match[1].trim();
+            }
+        }
+    }
+
+    // Dacă profesorul nu a fost găsit, returnează un mesaj corespunzător
+    return 'Profesorul nu a fost găsit.';
+}
+
+async function searchTeacherInAllSheets(auth, teacher, columnsCounts, seriesRanges) {
+    const sheets = google.sheets({ version: 'v4', auth });
+    const spreadsheetId = '1LzBgIlGlCowjvNuh7BuBYDGagXa8XHwzs_PAYWxcQWY';
+    const targetSheets = ['AN 1', 'AN 2', 'AN 3', 'AN 4'];
+    const daysOfWeek = ['luni', 'marti', 'miercuri', 'joi', 'vineri'];
+
+    let orarProfesor = {
+        nume: `Orar profesor ${teacher}`,
+        program: {
+            luni: [],
+            marti: [],
+            miercuri: [],
+            joi: [],
+            vineri: []
+        }
+    };
+
+    // Cache for day ranges
+    const dayRangesCache = {};
+
+    // Fetch day ranges for all sheets and cache them
+    const fetchDayRanges = async () => {
+        for (const sheet of targetSheets) {
+            const an = sheet.split(' ')[1];
+            const columnCount = columnsCounts[parseInt(an) - 1];
+            if (!dayRangesCache[an]) {
+                dayRangesCache[an] = await getDayRanges(auth, spreadsheetId, an, columnCount);
+            }
+        }
+    };
+
+    await fetchDayRanges();
+
+    const getDataForSheet = async (sheet, day) => {
+        const an = sheet.split(' ')[1];
+        const columnCount = columnsCounts[parseInt(an) - 1];
+        const serieRange = seriesRanges[parseInt(an) - 1];
+        const dayRange = dayRangesCache[an][day];
+
+        if (dayRange) {
+            const [startRow, endRow] = dayRange;
+            const sheetRange = `${sheet}!B${startRow}:${serieRange.end}${endRow}`;
+            return sheets.spreadsheets.values.batchGet({
+                spreadsheetId,
+                ranges: [sheetRange],
+            }).then(response => {
+                const rows = response.data.valueRanges[0].values;
+                if (rows) {
+                    return rows.flatMap((row, rowIndex) => {
+                        return row.map((cell, colIndex) => {
+                            if (cell.includes(teacher)) {
+                                const ora = row[0];
+                                const materie = findSubject(teacher, cell);
+                                let sala = '';
+
+                                // Search right for the first non-null cell
+                                for (let i = colIndex + 1; i < row.length; i++) {
+                                    if (row[i]) {
+                                        sala = row[i];
+                                        break;
+                                    }
+                                }
+
+                                return {
+                                    anulSiSeria: an,
+                                    materie: materie,
+                                    zi: day,
+                                    ora: extendTimeRange(ora, 1),
+                                    sala: sala
+                                };
+                            }
+                            return null;
+                        }).filter(item => item !== null);
+                    });
+                }
+                return [];
+            });
+        } else {
+            console.log(`Day range not found for day '${day}' in sheet '${sheet}'.`);
+            return [];
+        }
+    };
+
+    const allDataPromises = [];
+    for (const sheet of targetSheets) {
+        for (const day of daysOfWeek) {
+            allDataPromises.push((async () => {
+                await delay(50); // Delay to prevent rate limit
+                return getDataForSheet(sheet, day);
+            })());
+        }
+    }
+
+    const allData = await Promise.all(allDataPromises);
+    const ore = allData.flat();
+
+    ore.forEach(item => {
+        orarProfesor.program[item.zi].push(item);
+    });
+
+    const uniqueOrarProfesor = removeDuplicates(orarProfesor);
+
+    Object.keys(uniqueOrarProfesor.program).forEach(day => {
+        uniqueOrarProfesor.program[day].sort((a, b) => {
+            const getStartHour = (timeRange) => parseInt(timeRange.split('-')[0], 10);
+            return getStartHour(a.ora) - getStartHour(b.ora);
+        });
+    });
+
+    return uniqueOrarProfesor;
+}
+

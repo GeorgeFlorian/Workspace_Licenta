@@ -5,6 +5,7 @@ import { LoginPage, Dashboard, Register, NotFound } from "@pages/";
 
 import {
   loginAction,
+  registerAction,
   loginLoader,
   protectedLoader,
   fakeAuthProvider,
@@ -16,7 +17,6 @@ export const router = createBrowserRouter([
     id: "root",
     path: "/",
     loader() {
-      // Our root route always provides the user, if logged in
       return { user: fakeAuthProvider.username };
     },
     Component: Layout,
@@ -47,6 +47,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "register",
+        action: registerAction,
         Component: Register,
       },
     ],

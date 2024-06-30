@@ -1,0 +1,185 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "nume": {
+        "type": "string"
+      },
+      "program": {
+        "type": "object",
+        "properties": {
+          "luni": {
+            "type": "array",
+            "items": [
+              {
+                "type": "object",
+                "properties": {
+                  "anulSiSeria": {
+                    "type": "string"
+                  },
+                  "materie": {
+                    "type": "string"
+                  },
+                  "zi": {
+                    "type": "string"
+                  },
+                  "ora": {
+                    "type": "string"
+                  },
+                  "sala": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "anulSiSeria",
+                  "materie",
+                  "zi",
+                  "ora",
+                  "sala"
+                ]
+              }
+            ]
+          },
+          "marti": {
+            "type": "array",
+            "items": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "anulSiSeria": {
+                      "type": "string"
+                    },
+                    "materie": {
+                      "type": "string"
+                    },
+                    "zi": {
+                      "type": "string"
+                    },
+                    "ora": {
+                      "type": "string"
+                    },
+                    "sala": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "anulSiSeria",
+                    "materie",
+                    "zi",
+                    "ora",
+                    "sala"
+                  ]
+                }
+              ]
+          },
+          "miercuri": {
+            "type": "array",
+            "items": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "anulSiSeria": {
+                      "type": "string"
+                    },
+                    "materie": {
+                      "type": "string"
+                    },
+                    "zi": {
+                      "type": "string"
+                    },
+                    "ora": {
+                      "type": "string"
+                    },
+                    "sala": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "anulSiSeria",
+                    "materie",
+                    "zi",
+                    "ora",
+                    "sala"
+                  ]
+                }
+              ]
+          },
+          "joi": {
+            "type": "array",
+            "items": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "anulSiSeria": {
+                      "type": "string"
+                    },
+                    "materie": {
+                      "type": "string"
+                    },
+                    "zi": {
+                      "type": "string"
+                    },
+                    "ora": {
+                      "type": "string"
+                    },
+                    "sala": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "anulSiSeria",
+                    "materie",
+                    "zi",
+                    "ora",
+                    "sala"
+                  ]
+                }
+            ]
+          },
+          "vineri": {
+            "type": "array",
+            "items": [
+              {
+                "type": "object",
+                "properties": {
+                  "anulSiSeria": {
+                    "type": "string"
+                  },
+                  "materie": {
+                    "type": "string"
+                  },
+                  "zi": {
+                    "type": "string"
+                  },
+                  "ora": {
+                    "type": "string"
+                  },
+                  "sala": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "anulSiSeria",
+                  "materie",
+                  "zi",
+                  "ora",
+                  "sala"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "luni",
+          "marti",
+          "miercuri",
+          "joi",
+          "vineri"
+        ]
+      }
+    },
+    "required": [
+      "nume",
+      "program"
+    ]
+  }

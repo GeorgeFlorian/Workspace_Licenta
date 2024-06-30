@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { Autocomplete, TextField, Box, Button, Grid } from "@mui/material";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
+
 
 const anOptions = [1, 2, 3, 4];
 const serieOptions = ["A", "B", "C", "D", "E", "F", "G"];
 const paritateOptions = ["par", "impar"];
 const ziOptions = ["luni", "marti", "miercuri", "joi", "vineri"];
 const semigrupaOptions = ['a', 'b'];
+
 
 const OrarDeGrupa = () => {
   const [an, setAn] = useState(null);
@@ -94,27 +98,49 @@ const OrarDeGrupa = () => {
   
       const result = await response.json();
       console.log('Success:', result);
-  
-      // Create a Blob from the data
-      const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
-  
-      // Create a link element
-      const link = document.createElement('a');
-  
-      // Set the download attribute with a filename
-      link.download = 'orar-de-grupa.json';
-  
-      // Create a URL for the Blob and set it as the href attribute
-      link.href = URL.createObjectURL(blob);
-  
-      // Append the link to the body
-      document.body.appendChild(link);
-  
-      // Programmatically click the link to trigger the download
-      link.click();
-  
-      // Remove the link from the document
-      document.body.removeChild(link);
+      const doc = new jsPDF();
+      // Load the font
+      doc.addFont("Roboto-Black.ttf", "Roboto-Black", "normal");
+
+      // Set the font for text
+      doc.setFont('Roboto-Black');
+
+      // Create a new jsPDF instance
+      // Title styling
+      doc.setFontSize(18);
+      doc.setTextColor(40, 40, 40);
+      doc.text(result.numeOrar, 10, 10);
+
+      // Subtitle styling
+      doc.setFontSize(14);
+      doc.setTextColor(60, 60, 60);
+      doc.text(`Zi: ${result.zi}`, 10, 20);
+      doc.text(`Saptamana: ${result.saptamana}`, 10, 30);
+      doc.text(`Grupa: ${result.grupa}`, 10, 40);
+
+      // Draw a line below the header
+      doc.setLineWidth(0.5);
+      doc.line(10, 45, 200, 45);
+
+      // Prepare the data for the table
+      const tableColumn = ["Ora", "Materie", "Profesor", "Sala"];
+      const tableRows = result.orar.map(item => [
+        item.ora,
+        item.materie || '',
+        item.profesor || '',
+        item.sala || '',
+      ]);
+
+      // Add the table to the PDF
+      doc.autoTable({
+        startY: 50,
+        head: [tableColumn],
+        body: tableRows,
+      });
+
+      // Save the PDF
+      doc.output('dataurlnewwindow');
+      
     } catch (error) {
       console.error('Error:', error);
     }

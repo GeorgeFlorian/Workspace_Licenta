@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button, Typography } from "@mui/material";
 import OrarDeGrupa from "@components/forms/OrarDeGrupa.jsx";
 import OrarDeSala from "@components/forms/OrarDeSala.jsx";
+import OrarDeProfesor from "@components/forms/OrarDeProfesor.jsx";
 
 const Dashboard = () => {
   const [selectedOption, setSelectedOption] = useState(null);
@@ -30,11 +31,19 @@ const Dashboard = () => {
           >
             Orar de sala
           </Button>
+          <Button
+            variant="contained"
+            onClick={() => setSelectedOption("profesor")}
+            color={selectedOption === "profesor" ? "secondary" : "primary"}
+          >
+            Orar profesor
+          </Button>
         </div>
       </div>
       {/* Conditional rendering based on selected option */}
       {selectedOption === "grupa" && <OrarDeGrupa />}
       {selectedOption === "sala" && <OrarDeSala />}
+      {selectedOption === "profesor" && <OrarDeProfesor />}
     </div>
   );
 };

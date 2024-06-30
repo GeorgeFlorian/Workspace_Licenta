@@ -66,6 +66,46 @@ export const fakeAuthProvider = {
   },
 };
 
+// In @auth/auth.js
+
+export async function registerAction({ request }) {
+  const formData = await request.formData();
+  const email = formData.get("email");
+  const firstName = formData.get("firstName");
+  const lastName = formData.get("lastName");
+  const username = formData.get("username");
+  const password = formData.get("password");
+
+  if (!email || !firstName || !lastName || !username || !password) {
+    return {
+      error: "All fields are required to register",
+    };
+  }
+
+  try {
+    const response = await fetch("/api/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, firstName, lastName, username, password }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Registration failed");
+    }
+
+    return redirect("/login");
+  } catch (error) {
+    console.error("RegisterPage error:", error.message);
+    return {
+      error: error.message || "An error occurred while registering",
+    };
+  }
+}
+
+
 export async function loginAction({ request }) {
   const formData = await request.formData();
   const username = formData.get("username") || null;
@@ -100,9 +140,6 @@ export async function loginLoader() {
 }
 
 export function protectedLoader({ request }) {
-  // If the user is not logged in and tries to access `/protected`, we redirect
-  // them to `/login` with a `from` parameter that allows login to redirect back
-  // to this page upon successful authentication
   if (!fakeAuthProvider.username) {
     let params = new URLSearchParams();
     params.set("from", new URL(request.url).pathname);
